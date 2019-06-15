@@ -43,7 +43,8 @@ isError (Value _) = False
 --
 -- prop> \x -> isValue x /= isError x
 isValue :: Validation a -> Bool
-isValue = not . isError
+isValue (Error _) = False
+isValue (Value _) = True
 
 -- | Maps a function on a validation's value side.
 --
@@ -55,8 +56,8 @@ isValue = not . isError
 --
 -- prop> \x -> mapValidation id x == x
 mapValidation :: (a -> b) -> Validation a -> Validation b
-mapValidation _ (Error s) = Error s
-mapValidation f (Value a) = Value (f a)
+mapValidation f (Value v) = Value (f v)
+mapValidation _ (Error e) = Error e
 
 -- | Binds a function on a validation's value side to a new validation.
 --
@@ -71,8 +72,8 @@ mapValidation f (Value a) = Value (f a)
 --
 -- prop> \x -> bindValidation Value x == x
 bindValidation :: (a -> Validation b) -> Validation a -> Validation b
-bindValidation _ (Error s) = Error s
-bindValidation f (Value a) = f a
+bindValidation f (Value v) = f v
+bindValidation _ (Error e) = Error e
 
 -- | Returns a validation's value side or the given default if it is an error.
 --
@@ -84,8 +85,8 @@ bindValidation f (Value a) = f a
 --
 -- prop> \x -> isValue x || valueOr x n == n
 valueOr :: Validation a -> a -> a
-valueOr (Error _) a = a
-valueOr (Value a) _ = a
+valueOr (Value x) _ = x
+valueOr (Error _) x = x
 
 -- | Returns a validation's error side or the given default if it is a value.
 --
@@ -98,7 +99,7 @@ valueOr (Value a) _ = a
 -- prop> \x -> isError x || errorOr x e == e
 errorOr :: Validation a -> Err -> Err
 errorOr (Error e) _ = e
-errorOr (Value _) a = a
+errorOr (Value _) x = x
 
 valueValidation :: a -> Validation a
-valueValidation = Value
+valueValidation x = Value x

@@ -28,12 +28,8 @@ import qualified Prelude as P(fmap, return, (>>=))
 --   `∀u y. u <*> pure y = pure ($ y) <*> u`
 
 class Functor f => Applicative f where
-  pure ::
-    a -> f a
-  (<*>) ::
-    f (a -> b)
-    -> f a
-    -> f b
+  pure :: a -> f a
+  (<*>) :: f (a -> b) -> f a -> f b
 
 infixl 4 <*>
 
@@ -44,17 +40,11 @@ infixl 4 <*>
 -- >>> ExactlyOne (+10) <*> ExactlyOne 8
 -- ExactlyOne 18
 instance Applicative ExactlyOne where
-  pure ::
-    a
-    -> ExactlyOne a
-  pure =
-    error "todo: Course.Applicative pure#instance ExactlyOne"
-  (<*>) ::
-    ExactlyOne (a -> b)
-    -> ExactlyOne a
-    -> ExactlyOne b
-  (<*>) =
-    error "todo: Course.Applicative (<*>)#instance ExactlyOne"
+  pure :: a -> ExactlyOne a
+  pure a = ExactlyOne a
+
+  (<*>) :: ExactlyOne (a -> b) -> ExactlyOne a -> ExactlyOne b
+  (<*>) (ExactlyOne f) (ExactlyOne a) = ExactlyOne (f a)
 
 -- | Insert into a List.
 --
@@ -63,17 +53,13 @@ instance Applicative ExactlyOne where
 -- >>> (+1) :. (*2) :. Nil <*> 1 :. 2 :. 3 :. Nil
 -- [2,3,4,2,4,6]
 instance Applicative List where
-  pure ::
-    a
-    -> List a
-  pure =
-    error "todo: Course.Applicative pure#instance List"
-  (<*>) ::
-    List (a -> b)
-    -> List a
-    -> List b
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance List"
+  pure :: a -> List a
+  pure x = x :. Nil
+
+  (<*>) :: List (a -> b) -> List a -> List b
+  (<*>) _ Nil = Nil
+  (<*>) Nil _ = Nil
+  (<*>) (f :. fs) (x :. xs) = f x :. (f <$> xs) ++ (fs <*> (x :. xs))
 
 -- | Insert into an Optional.
 --
@@ -88,17 +74,14 @@ instance Applicative List where
 -- >>> Full (+8) <*> Empty
 -- Empty
 instance Applicative Optional where
-  pure ::
-    a
-    -> Optional a
-  pure =
-    error "todo: Course.Applicative pure#instance Optional"
-  (<*>) ::
-    Optional (a -> b)
-    -> Optional a
-    -> Optional b
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance Optional"
+  pure :: a -> Optional a
+  pure x = Full x
+
+  (<*>) :: Optional (a -> b) -> Optional a -> Optional b
+  (<*>) _ Empty = Empty
+  (<*>) Empty _ = Empty
+  (<*>) (Full f) (Full x) = Full (f x)
+
 
 -- | Insert into a constant function.
 --
@@ -119,17 +102,11 @@ instance Applicative Optional where
 --
 -- prop> \x y -> pure x y == x
 instance Applicative ((->) t) where
-  pure ::
-    a
-    -> ((->) t a)
-  pure =
-    error "todo: Course.Applicative pure#((->) t)"
-  (<*>) ::
-    ((->) t (a -> b))
-    -> ((->) t a)
-    -> ((->) t b)
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance ((->) t)"
+  pure :: a -> ((->) t a)
+  pure x _ = x
+
+  (<*>) :: ((->) t (a -> b)) -> ((->) t a) -> ((->) t b)
+  (<*>) f g x = f x (g x)
 
 
 -- | Apply a binary function in the environment.
@@ -151,14 +128,8 @@ instance Applicative ((->) t) where
 --
 -- >>> lift2 (+) length sum (listh [4,5,6])
 -- 18
-lift2 ::
-  Applicative f =>
-  (a -> b -> c)
-  -> f a
-  -> f b
-  -> f c
-lift2 =
-  error "todo: Course.Applicative#lift2"
+lift2 :: Applicative f => (a -> b -> c) -> f a -> f b -> f c
+lift2 f a1 a2 = (pure f) <*> a1 <*> a2
 
 -- | Apply a ternary function in the environment.
 -- /can be written using `lift2` and `(<*>)`./
@@ -183,15 +154,8 @@ lift2 =
 --
 -- >>> lift3 (\a b c -> a + b + c) length sum product (listh [4,5,6])
 -- 138
-lift3 ::
-  Applicative f =>
-  (a -> b -> c -> d)
-  -> f a
-  -> f b
-  -> f c
-  -> f d
-lift3 =
-  error "todo: Course.Applicative#lift3"
+lift3 :: Applicative f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
+lift3 f a1 a2 a3 = (lift2 f a1 a2) <*> a3
 
 -- | Apply a quaternary function in the environment.
 -- /can be written using `lift3` and `(<*>)`./
@@ -216,24 +180,12 @@ lift3 =
 --
 -- >>> lift4 (\a b c d -> a + b + c + d) length sum product (sum . filter even) (listh [4,5,6])
 -- 148
-lift4 ::
-  Applicative f =>
-  (a -> b -> c -> d -> e)
-  -> f a
-  -> f b
-  -> f c
-  -> f d
-  -> f e
-lift4 =
-  error "todo: Course.Applicative#lift4"
+lift4 :: Applicative f => (a -> b -> c -> d -> e) -> f a -> f b -> f c -> f d -> f e
+lift4 f a1 a2 a3 a4 = (lift3 f a1 a2 a3) <*> a4
 
 -- | Apply a nullary function in the environment.
-lift0 ::
-  Applicative f =>
-  a
-  -> f a
-lift0 =
-  error "todo: Course.Applicative#lift0"
+lift0 :: Applicative f => a -> f a
+lift0 x = pure x
 
 -- | Apply a unary function in the environment.
 -- /can be written using `lift0` and `(<*>)`./
@@ -246,13 +198,8 @@ lift0 =
 --
 -- >>> lift1 (+1) (1 :. 2 :. 3 :. Nil)
 -- [2,3,4]
-lift1 ::
-  Applicative f =>
-  (a -> b)
-  -> f a
-  -> f b
-lift1 =
-  error "todo: Course.Applicative#lift1"
+lift1 :: Applicative f => (a -> b) -> f a -> f b
+lift1 f a = lift0 f <*> a
 
 -- | Apply, discarding the value of the first argument.
 -- Pronounced, right apply.
