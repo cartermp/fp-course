@@ -183,18 +183,14 @@ flatten lists =
 --
 -- prop> \x -> flatMap id (x :: List (List Int)) == flatten x
 flatMap :: (a -> List b) -> List a -> List b
-flatMap f items =
-  case items of
-    Nil -> Nil
-    x :. Nil -> f x
-    x :. xs -> f x ++ flatMap f xs
+flatMap f = flatten . map f
 
 -- | Flatten a list of lists to a list (again).
 -- HOWEVER, this time use the /flatMap/ function that you just wrote.
 --
 -- prop> \x -> let types = x :: List (List Int) in flatten x == flattenAgain x
 flattenAgain :: List (List a) -> List a
-flattenAgain xs = flatMap (\x -> x) xs
+flattenAgain = flatMap id
 
 -- | Convert a list of optional values to an optional list of values.
 --
@@ -228,10 +224,6 @@ seqOptional xs = seqOptional' xs Nil
       case y of
         Empty -> Empty
         Full z -> seqOptional' ys (z :. acc)
-  -- case x of
-  --   Empty -> Empty
-  --   Full item -> Full (item :. seqOptional xs)
-
 
 -- | Find the first element in the list matching the predicate.
 --

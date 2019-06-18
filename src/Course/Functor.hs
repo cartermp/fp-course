@@ -46,8 +46,7 @@ instance Functor ExactlyOne where
 -- [2,3,4]
 instance Functor List where
   (<$>) :: (a -> b) -> List a -> List b
-  (<$>) _ Nil = Nil
-  (<$>) f (x :. xs) = f x :. (f <$> xs)
+  (<$>) = map
 
 -- | Maps a function on the Optional functor.
 --
@@ -58,8 +57,7 @@ instance Functor List where
 -- Full 3
 instance Functor Optional where
   (<$>) :: (a -> b) -> Optional a -> Optional b
-  (<$>) _ Empty = Empty
-  (<$>) f (Full x) = Full (f x)
+  (<$>) = mapOptional
 
 -- | Maps a function on the reader ((->) t) functor.
 --
@@ -67,7 +65,7 @@ instance Functor Optional where
 -- 17
 instance Functor ((->) t) where
   (<$>) :: (a -> b) -> ((->) t a) -> ((->) t b)
-  (<$>) f g x = (f . g) x
+  f <$> g = f . g
 
 -- | Anonymous map. Maps a constant value on a functor.
 --
@@ -78,7 +76,7 @@ instance Functor ((->) t) where
 --
 -- prop> \x q -> x <$ Full q == Full x
 (<$) :: Functor f => a -> f b -> f a
-(<$) a g = (\_ -> a) <$> g
+(<$) a g = const a <$> g
 
 -- | Anonymous map producing unit value.
 --
@@ -94,7 +92,7 @@ instance Functor ((->) t) where
 -- >>> void (+10) 5
 -- ()
 void :: Functor f => f a -> f ()
-void g = (\_ -> ()) <$> g
+void g = const () <$> g
 
 -----------------------
 -- SUPPORT LIBRARIES --
