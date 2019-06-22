@@ -69,8 +69,7 @@ foldLeft f b (h :. t) = let b' = f b h in b' `seq` foldLeft f b' t
 --
 -- prop> \x -> x `headOr` Nil == x
 headOr :: a -> List a -> a
-headOr x Nil = x
-headOr _ (y :. _) = y
+headOr = foldRight const
 
 -- | The product of the elements of a list.
 --
@@ -104,7 +103,7 @@ sum = foldLeft (+) 0
 --
 -- prop> \x -> sum (map (const 1) x) == length x
 length :: List a -> Int
-length = foldLeft (\ x _ -> x + 1) 0
+length = foldLeft (\x _ -> x + 1) 0
 
 -- | Map the given function on each element of the list.
 --
@@ -147,9 +146,9 @@ filter f (x :. t) =
 --
 -- prop> \x -> x ++ Nil == x
 (++) :: List a -> List a -> List a
-(++) xs Nil = xs
-(++) Nil ys = ys
-(++) (x :. xs) ys = x :. (++) xs ys
+xs ++ Nil = xs
+Nil ++ ys = ys
+(x :. xs) ++ ys = x :. (++) xs ys
 
 infixr 5 ++
 
@@ -583,13 +582,8 @@ repeat ::
 repeat x =
   x :. repeat x
 
-replicate ::
-  (Num n, Ord n) =>
-  n
-  -> a
-  -> List a
-replicate n x =
-  take n (repeat x)
+replicate :: (Num n, Ord n) => n -> a -> List a
+replicate n x = take n (repeat x)
 
 reads ::
   P.Read a =>

@@ -154,7 +154,7 @@ lift2 f a1 a2 = f <$> a1 <*> a2
 -- >>> lift3 (\a b c -> a + b + c) length sum product (listh [4,5,6])
 -- 138
 lift3 :: Applicative f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
-lift3 f a1 a2 a3 = f <$> a1 <*> a2 <*> a3 --lift2 f a1 a2 <*> a3
+lift3 f a1 a2 a3 = f <$> a1 <*> a2 <*> a3
 
 -- | Apply a quaternary function in the environment.
 -- /can be written using `lift3` and `(<*>)`./
@@ -259,8 +259,7 @@ lift1 f a = f <$> a
 -- >>> sequence ((*10) :. (+2) :. Nil) 6
 -- [60,8]
 sequence :: Applicative f => List (f a) -> f (List a)
-sequence Nil = pure Nil
-sequence (x :. xs) = undefined
+sequence = foldRight (lift2 (:.)) (pure Nil)
 
 -- | Replicate an effect a given number of times.
 --
@@ -281,7 +280,7 @@ sequence (x :. xs) = undefined
 -- >>> replicateA 3 ('a' :. 'b' :. 'c' :. Nil)
 -- ["aaa","aab","aac","aba","abb","abc","aca","acb","acc","baa","bab","bac","bba","bbb","bbc","bca","bcb","bcc","caa","cab","cac","cba","cbb","cbc","cca","ccb","ccc"]
 replicateA :: Applicative f => Int -> f a -> f (List a)
-replicateA x a = undefined
+replicateA n = sequence . replicate n
 
 -- | Filter a list with a predicate that produces an effect.
 --
@@ -303,13 +302,8 @@ replicateA x a = undefined
 -- >>> filtering (const $ True :. True :.  Nil) (1 :. 2 :. 3 :. Nil)
 -- [[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3]]
 --
-filtering ::
-  Applicative f =>
-  (a -> f Bool)
-  -> List a
-  -> f (List a)
-filtering =
-  error "todo: Course.Applicative#filtering"
+filtering :: Applicative f => (a -> f Bool) -> List a -> f (List a)
+filtering pred = foldRight (\a -> lift2 (\b -> if b then (a:.) else id) (pred a)) (pure Nil) 
 
 -----------------------
 -- SUPPORT LIBRARIES --
