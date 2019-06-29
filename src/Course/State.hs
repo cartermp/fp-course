@@ -61,7 +61,7 @@ put x = State (\_ ->((), x))
 -- (10,6)
 instance Functor (State s) where
   (<$>) :: (a -> b) -> State s a -> State s b
-  f <$> (State a) = State (\x -> _)
+  f <$> s = State (\x -> let (a, s') = runState s x in (f a, s'))
 
 -- | Implement the `Applicative` instance for `State s`.
 --
@@ -74,17 +74,11 @@ instance Functor (State s) where
 -- >>> runState (State (\s -> ((+3), s ++ ("apple":.Nil))) <*> State (\s -> (7, s ++ ("banana":.Nil)))) Nil
 -- (10,["apple","banana"])
 instance Applicative (State s) where
-  pure ::
-    a
-    -> State s a
-  pure =
-    error "todo: Course.State pure#instance (State s)"
-  (<*>) ::
-    State s (a -> b)
-    -> State s a
-    -> State s b
-  (<*>) =
-    error "todo: Course.State (<*>)#instance (State s)"
+  pure :: a -> State s a
+  pure a = State (\s -> (a, s))
+
+  (<*>) :: State s (a -> b) -> State s a -> State s b
+  sf <*> s = 
 
 -- | Implement the `Monad` instance for `State s`.
 --
